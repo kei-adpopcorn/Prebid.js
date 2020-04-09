@@ -3,6 +3,7 @@ import {parse as parseUrl} from '../src/url.js';
 import {config} from '../src/config.js';
 import {registerBidder} from '../src/adapters/bidderFactory.js';
 import {BANNER} from '../src/mediaTypes.js';
+import {getStorageManager} from '../src/storageManager.js';
 
 const SERVER = 'ssp-web-request.igaw.io';
 const BANNER_API_ENDPOINT = '/v1/rev1/banner';
@@ -11,6 +12,7 @@ const VERSION = {
   adapter: '1.0.0',
 };
 
+const storage = getStorageManager();
 export const spec = {
   code: 'adpopcorn',
   aliases: ['ap'],
@@ -36,7 +38,7 @@ export const spec = {
 
     const { width, height } = screen;
     const tzOffset = -new Date().getTimezoneOffset();
-    const adid = utils.getCookie('__igaw__adid');
+    const adid = storage.getCookie('__igaw__adid') || '';
     const ua = new Ua(navigator.userAgent);
     const device = ua.device()
     const os = ua.os()
@@ -138,7 +140,6 @@ export const spec = {
    * @param {Boolean} syncOptions.iframeEnabled
    * @returns {Array}
    */
-  /*
   getUserSyncs({ iframeEnabled }) {
     if (iframeEnabled) {
       return [{
@@ -147,7 +148,6 @@ export const spec = {
       }];
     }
   },
-  */
 };
 
 registerBidder(spec);
