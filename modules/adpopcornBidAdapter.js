@@ -9,7 +9,7 @@ const SERVER = 'ssp-web-request.igaw.io';
 const BANNER_API_ENDPOINT = '/v1/rev1/banner';
 const VERSION = {
   pbjs: '$prebid.version$',
-  adapter: '1.0.0',
+  adapter: '1.0.1',
 };
 
 const storage = getStorageManager();
@@ -39,6 +39,7 @@ export const spec = {
     const { width, height } = screen;
     const tzOffset = -new Date().getTimezoneOffset();
     const adid = storage.getCookie('__igaw__adid') || '';
+    const dspid = { '700': '', '701': '' };
     const ua = new Ua(navigator.userAgent);
     const device = ua.device()
     const os = ua.os()
@@ -48,6 +49,11 @@ export const spec = {
 
     const position = { x: 0, y: 0 }; // reserved
     const site = getSiteInfo(refererInfo);
+
+    // get dsp's adid
+    for (const id in dspid) {
+        dspid[id] = storage.getCookie(`__igaw__adid__${id}`) || '';
+    }
 
     // banner
     bannerBids.forEach(({
@@ -74,6 +80,7 @@ export const spec = {
           publisherId,
           placementId,
           adid,
+          dspid,
           width,
           height,
           device,
@@ -162,7 +169,7 @@ function getApiServer() {
 
 function getSiteInfo({ referer = '' }) {
   const { href: url, protocol, hostname } = parseUrl(referer, { decodeSearchAsString: true });
-  const domain = `${protocol}//${hostname}`;
+  const domain = `${protocol}://${hostname}`;
   let referrer = '';
 
   try {
