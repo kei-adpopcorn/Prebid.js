@@ -7,6 +7,7 @@ import {getStorageManager} from '../src/storageManager.js';
 
 const SERVER = 'ssp-web-request.igaw.io';
 const BANNER_API_ENDPOINT = '/v1/rev1/banner';
+const COOKIE_NAME = '__igaw__adid';
 const VERSION = {
   pbjs: '$prebid.version$',
   adapter: '1.0.1',
@@ -38,8 +39,8 @@ export const spec = {
 
     const { width, height } = screen;
     const tzOffset = -new Date().getTimezoneOffset();
-    const adid = storage.getCookie('__igaw__adid') || '';
-    const dspid = { '700': '', '701': '' };
+    const adids = getAdids(storage.getCookie(COOKIE_NAME) || '');
+    const dspid = { '700'/* widerplanet */: '', '701'/* enliple */: '', '702'/* mezzo */: '', };
     const ua = new Ua(navigator.userAgent);
     const device = ua.device()
     const os = ua.os()
@@ -50,9 +51,11 @@ export const spec = {
     const position = { x: 0, y: 0 }; // reserved
     const site = getSiteInfo(refererInfo);
 
-    // get dsp's adid
-    for (const id in dspid) {
-        dspid[id] = storage.getCookie(`__igaw__adid__${id}`) || '';
+    // extract dsp id
+    for (const k in adids) {
+      if (k !== "000") {
+        dspid[k] = adids[k];
+      }
     }
 
     // banner
@@ -79,7 +82,6 @@ export const spec = {
         data: {
           publisherId,
           placementId,
-          adid,
           dspid,
           width,
           height,
@@ -90,6 +92,7 @@ export const spec = {
           position,
           site,
           bcat,
+          adid: adids['000'],
           bannerSize: `${w}x${h}`,
           ua: ua.toString(),
           version: VERSION,
@@ -167,6 +170,58 @@ function getApiServer() {
   return config.getConfig('adpopcorn.server') || SERVER;
 }
 
+function getAdids(cookie, adids = {}) {
+  let ds = "";
+
+  try {
+    ds = b64decode(cookie);
+  } catch (ex) {
+    if (cookie.indexOf('-') >= 0) {
+      ds = `000=${cookie}`;
+    }
+  }
+
+  [].forEach.call(ds.split(';'), value => {
+    if (value !== "") {
+      const parts = decodeURIComponent(value).split('=');
+
+      adids[parts[0]] = parts[1];
+    }
+  });
+
+  return adids;
+}
+
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+function b64decode(input) {
+  if ('atob' in window) {
+    return atob(input);
+  }
+
+  const str = (String(input)).replace(/[=]+$/, ''); // #31: ExtendScript bad parse of /=
+  let output = '';
+
+  if (str.length % 4 === 1) {
+    throw new InvalidCharacterError("'atob' failed: The string to be decoded is not correctly encoded.");
+  }
+  for (
+    // initialize result and counters
+    let bc = 0, bs, buffer, idx = 0;
+    // get next character
+    buffer = str.charAt(idx++); // eslint-disable-line no-cond-assign
+    // character found in table? initialize bit storage and add its ascii value;
+    ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer,
+      // and if not first of each 4 characters,
+      // convert the first 8 bits to one ascii character
+      bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0
+  ) {
+    // try to find character in table (0-63, not found => -1)
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+
 function getSiteInfo({ referer = '' }) {
   const { href: url, protocol, hostname } = parseUrl(referer, { decodeSearchAsString: true });
   const domain = `${protocol}://${hostname}`;
@@ -210,11 +265,12 @@ class Ua {
     this.ua = ua;
     [].forEach.call(['device', 'os', 'browser'], prop => {
       this[prop] = () => {
-        const obj = Ua.mapper.rgx(ua, Ua.rgxmap[prop]);
-        if (prop === 'device' && utils.isEmpty(obj)) {
-          obj.type = 'desktop';
-        }
-        return obj;
+          const obj = Ua.mapper.rgx(ua, Ua.rgxmap[prop]);
+
+          if (prop === 'device' && utils.isEmpty(obj)) {
+            obj.type = 'desktop';
+          }
+          return obj;
       };
     });
   }

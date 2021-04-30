@@ -459,9 +459,9 @@ export function contains(a, obj) {
     return false;
   }
 
-  if (isFn(a.indexOf)) {
+  /*if (isFn(a.indexOf)) {
     return a.indexOf(obj) !== -1;
-  }
+  }*/
 
   var i = a.length;
   while (i--) {
