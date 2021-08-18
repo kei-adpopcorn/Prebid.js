@@ -10,7 +10,7 @@ const BANNER_API_ENDPOINT = '/v1/rev1/banner';
 const COOKIE_NAME = '__igaw__adid';
 const VERSION = {
   pbjs: '$prebid.version$',
-  adapter: '1.0.1',
+  adapter: '1.0.2',
 };
 
 const storage = getStorageManager();
