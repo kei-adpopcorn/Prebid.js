@@ -40,12 +40,12 @@ export const spec = {
     const { width, height } = screen;
     const tzOffset = -new Date().getTimezoneOffset();
     const adids = getAdids(storage.getCookie(COOKIE_NAME) || '');
-    const dspid = { '700'/* widerplanet */: '', '701'/* enliple */: '', '702'/* mezzo */: '', };
+    const dspid = {};
     const ua = new Ua(navigator.userAgent);
     const device = ua.device()
     const os = ua.os()
     const browser = ua.browser();
-    browser.dnt = utils.getDNT() | 0;
+    browser.dnt = utils.getDNT();
     browser.language = (navigator.language || navigator.userLanguage).substring(0, 2);
 
     const position = { x: 0, y: 0 }; // reserved
@@ -64,6 +64,7 @@ export const spec = {
       params: {
         publisherId,
         placementId,
+        external = {},
         bcat = [],
       },
       mediaTypes: {
@@ -82,6 +83,7 @@ export const spec = {
         data: {
           publisherId,
           placementId,
+          external,
           dspid,
           width,
           height,
