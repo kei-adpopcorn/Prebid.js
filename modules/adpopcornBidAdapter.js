@@ -45,7 +45,7 @@ export const spec = {
     const device = ua.device()
     const os = ua.os()
     const browser = ua.browser();
-    browser.dnt = utils.getDNT();
+    browser.dnt = 1; // utils.getDNT() | 0;
     browser.language = (navigator.language || navigator.userLanguage).substring(0, 2);
 
     const position = { x: 0, y: 0 }; // reserved
@@ -64,6 +64,7 @@ export const spec = {
       params: {
         publisherId,
         placementId,
+        adid,
         external = {},
         bcat = [],
       },
@@ -73,6 +74,11 @@ export const spec = {
         },
       },
     }) => {
+      let myadid = adids['000'];
+      if (myadid == null) { // for zum
+        myadid = getAdids(adid)['000'];
+      }
+
       requests.push({
         method: 'POST',
         url: `https://${getApiServer()}${BANNER_API_ENDPOINT}`,
@@ -94,7 +100,7 @@ export const spec = {
           position,
           site,
           bcat,
-          adid: adids['000'],
+          adid: myadid,
           bannerSize: `${w}x${h}`,
           ua: ua.toString(),
           version: VERSION,
